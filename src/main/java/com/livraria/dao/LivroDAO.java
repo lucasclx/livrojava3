@@ -143,6 +143,40 @@ public class LivroDAO {
             return stmt.executeUpdate() > 0;
         }
     }
+
+    public List<Livro> obterRecomendacoes(int usuarioId) throws SQLException {
+        String sql = """
+            SELECT DISTINCT l2.* 
+            FROM pedidos p
+            JOIN itens_pedido ip ON p.id = ip.pedido_id
+            JOIN livros l1 ON ip.livro_id = l1.id
+            JOIN livros l2 ON l1.categoria = l2.categoria
+            WHERE p.usuario_id = ? 
+            AND l2.id NOT IN (
+                SELECT livro_id FROM itens_pedido ip2
+                JOIN pedidos p2 ON ip2.pedido_id = p2.id
+                WHERE p2.usuario_id = ?
+            )
+            ORDER BY RAND()
+            LIMIT 10
+        """;
+        
+        List<Livro> recomendacoes = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, usuarioId);
+            stmt.setInt(2, usuarioId);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    recomendacoes.add(criarLivroDoResultSet(rs));
+                }
+            }
+        }
+        
+        return recomendacoes;
+    }
     
     private Livro criarLivroDoResultSet(ResultSet rs) throws SQLException {
         Livro livro = new Livro();

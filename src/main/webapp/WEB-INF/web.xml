@@ -57,6 +57,36 @@
         <servlet-name>CompraServlet</servlet-name>
         <url-pattern>/compra</url-pattern>
     </servlet-mapping>
+
+    <!-- Servlet para Avaliacoes -->
+    <servlet>
+        <servlet-name>AvaliacaoServlet</servlet-name>
+        <servlet-class>com.livraria.servlet.AvaliacaoServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AvaliacaoServlet</servlet-name>
+        <url-pattern>/avaliacoes</url-pattern>
+    </servlet-mapping>
+
+    <!-- Servlet para Lista de Desejos -->
+    <servlet>
+        <servlet-name>ListaDesejosServlet</servlet-name>
+        <servlet-class>com.livraria.servlet.ListaDesejosServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ListaDesejosServlet</servlet-name>
+        <url-pattern>/favoritos</url-pattern>
+    </servlet-mapping>
+
+    <!-- Servlet para Cupons -->
+    <servlet>
+        <servlet-name>CupomServlet</servlet-name>
+        <servlet-class>com.livraria.servlet.CupomServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>CupomServlet</servlet-name>
+        <url-pattern>/cupom</url-pattern>
+    </servlet-mapping>
     
     <!-- Listener para inicialização -->
     <listener>

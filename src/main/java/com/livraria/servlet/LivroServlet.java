@@ -44,6 +44,9 @@ public class LivroServlet extends HttpServlet {
                 case "categoria":
                     buscarPorCategoria(request, response);
                     break;
+                case "recomendacoes":
+                    obterRecomendacoes(request, response);
+                    break;
                 default:
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                     response.getWriter().write("{\"erro\":\"Ação não reconhecida\"}");
@@ -54,6 +57,20 @@ public class LivroServlet extends HttpServlet {
         }
     }
     
+    private void obterRecomendacoes(HttpServletRequest request, HttpServletResponse response)
+            throws SQLException, IOException {
+        Integer usuarioId = (Integer) request.getSession().getAttribute("usuarioId");
+        List<Livro> recomendacoes;
+
+        if (usuarioId != null) {
+            recomendacoes = livroDAO.obterRecomendacoes(usuarioId);
+        } else {
+            // Se não houver usuário logado, retorna livros aleatórios ou mais vendidos
+            recomendacoes = livroDAO.listarTodos(); // Ou um método para livros populares
+        }
+        response.getWriter().write(gson.toJson(recomendacoes));
+    }
+
     private void listarLivros(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, IOException {
         List<Livro> livros = livroDAO.listarTodos();

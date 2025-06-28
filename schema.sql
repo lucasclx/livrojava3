@@ -79,13 +79,56 @@ INSERT INTO itens_pedido (pedido_id, livro_id, quantidade, preco_unitario) VALUE
 (1, 4, 1, 19.90),
 (1, 6, 1, 28.90);
 
+-- Tabela de avaliações
+CREATE TABLE avaliacoes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    livro_id INT NOT NULL,
+    usuario_id INT NOT NULL,
+    nota INT NOT NULL CHECK (nota >= 1 AND nota <= 5),
+    comentario TEXT,
+    data_avaliacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    util INT DEFAULT 0,
+    FOREIGN KEY (livro_id) REFERENCES livros(id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
+    UNIQUE KEY unique_avaliacao (livro_id, usuario_id)
+);
+
+-- Tabela de lista de desejos
+CREATE TABLE lista_desejos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    livro_id INT NOT NULL,
+    data_adicao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
+    FOREIGN KEY (livro_id) REFERENCES livros(id),
+    UNIQUE KEY unique_desejo (usuario_id, livro_id)
+);
+
+-- Tabela de cupons de desconto
+CREATE TABLE cupons (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    codigo VARCHAR(50) UNIQUE NOT NULL,
+    tipo ENUM('percentual', 'fixo') NOT NULL,
+    valor DECIMAL(10,2) NOT NULL,
+    valido_ate DATE NOT NULL,
+    uso_maximo INT,
+    uso_atual INT DEFAULT 0,
+    ativo BOOLEAN DEFAULT TRUE,
+    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Inserção de cupons de exemplo
+INSERT INTO cupons (codigo, tipo, valor, valido_ate, uso_maximo, ativo) VALUES
+('PRIMEIRACOMPRA', 'percentual', 10.00, '2025-12-31', NULL, TRUE),
+('DESCONTO50', 'fixo', 50.00, '2025-11-30', 100, TRUE);
+
 -- Views úteis
-CREATE VIEW vw_livros_categoria AS
+CREATE OR REPLACE VIEW vw_livros_categoria AS
 SELECT categoria, COUNT(*) as total_livros, AVG(preco) as preco_medio
 FROM livros
 GROUP BY categoria;
 
-CREATE VIEW vw_pedidos_detalhados AS
+CREATE OR REPLACE VIEW vw_pedidos_detalhados AS
 SELECT 
     p.id as pedido_id,
     u.nome as cliente,
@@ -97,3 +140,18 @@ FROM pedidos p
 JOIN usuarios u ON p.usuario_id = u.id
 LEFT JOIN itens_pedido ip ON p.id = ip.pedido_id
 GROUP BY p.id, u.nome, p.total, p.status, p.data_pedido;
+
+CREATE OR REPLACE VIEW vw_avaliacoes_livros AS
+SELECT 
+    l.id,
+    l.titulo,
+    COUNT(a.id) as total_avaliacoes,
+    AVG(a.nota) as media_nota,
+    SUM(CASE WHEN a.nota = 5 THEN 1 ELSE 0 END) as cinco_estrelas,
+    SUM(CASE WHEN a.nota = 4 THEN 1 ELSE 0 END) as quatro_estrelas,
+    SUM(CASE WHEN a.nota = 3 THEN 1 ELSE 0 END) as tres_estrelas,
+    SUM(CASE WHEN a.nota = 2 THEN 1 ELSE 0 END) as duas_estrelas,
+    SUM(CASE WHEN a.nota = 1 THEN 1 ELSE 0 END) as uma_estrela
+FROM livros l
+LEFT JOIN avaliacoes a ON l.id = a.livro_id
+GROUP BY l.id, l.titulo;

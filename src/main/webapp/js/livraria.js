@@ -2,23 +2,104 @@
 let carrinho = [];
 let livroSelecionado = null;
 let usuarioLogado = null;
+let todosLivros = []; // Cache para os livros
+let timeoutBusca;
+let notaSelecionada = 0;
 
 // Inicialização da página
 document.addEventListener('DOMContentLoaded', function() {
+    criarCarrinhoLateral();
     carregarTodosLivros();
     carregarCarrinhoDoStorage();
     atualizarContadorCarrinho();
     verificarStatusLogin();
     
-    // Busca ao pressionar Enter
-    document.getElementById('busca-input').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            buscarLivros();
+    // Event listeners dos filtros
+    document.getElementById('busca-input').addEventListener('input', function(e) {
+        clearTimeout(timeoutBusca);
+        const termo = e.target.value.trim();
+        
+        if (termo.length < 2) {
+            document.getElementById('sugestoes-busca').style.display = 'none';
+            return;
         }
+        
+        timeoutBusca = setTimeout(() => {
+            fetch(`livros?action=buscar&termo=${encodeURIComponent(termo)}&limite=5`)
+                .then(response => response.json())
+                .then(livros => {
+                    mostrarSugestoes(livros);
+                });
+        }, 300); // Debounce de 300ms
     });
+    
+    document.getElementById('preco-min').addEventListener('input', atualizarValorRange);
+    document.getElementById('preco-max').addEventListener('input', atualizarValorRange);
+    
+    document.querySelectorAll('.filtro-categoria').forEach(el => el.addEventListener('change', aplicarFiltros));
+    document.getElementById('em-estoque').addEventListener('change', aplicarFiltros);
+    document.getElementById('ordenacao').addEventListener('change', aplicarFiltros);
+
+    // Event listeners para as estrelas de avaliação
+    document.querySelectorAll('.estrelas-selecao .estrela').forEach(estrela => {
+        estrela.addEventListener('click', function() {
+            notaSelecionada = parseInt(this.dataset.nota);
+            atualizarEstrelasSelecao();
+        });
+        estrela.addEventListener('mouseover', function() {
+            preencherEstrelas(parseInt(this.dataset.nota));
+        });
+        estrela.addEventListener('mouseout', function() {
+            preencherEstrelas(notaSelecionada);
+        });
+    });
+    carregarRecomendacoes();
 });
 
+function atualizarValorRange() {
+    const min = document.getElementById('preco-min').value;
+    const max = document.getElementById('preco-max').value;
+    document.getElementById('valor-min').textContent = min;
+    document.getElementById('valor-max').textContent = max;
+    aplicarFiltros();
+}
+
 // ===== FUNÇÕES DE LIVROS =====
+
+function aplicarFiltros() {
+    const termoBusca = document.getElementById('busca-input').value.toLowerCase();
+    const precoMin = parseFloat(document.getElementById('preco-min').value);
+    const precoMax = parseFloat(document.getElementById('preco-max').value);
+    
+    const categoriasSelecionadas = [...document.querySelectorAll('.filtro-categoria:checked')].map(el => el.value);
+    const apenasEmEstoque = document.getElementById('em-estoque').checked;
+    const ordenacao = document.getElementById('ordenacao').value;
+
+    let livrosFiltrados = todosLivros.filter(livro => {
+        const atendeBusca = !termoBusca || livro.titulo.toLowerCase().includes(termoBusca) || livro.autor.toLowerCase().includes(termoBusca);
+        const atendePreco = livro.preco >= precoMin && livro.preco <= precoMax;
+        const atendeCategoria = categoriasSelecionadas.length === 0 || categoriasSelecionadas.includes(livro.categoria);
+        const atendeEstoque = !apenasEmEstoque || livro.estoque > 0;
+        
+        return atendeBusca && atendePreco && atendeCategoria && atendeEstoque;
+    });
+
+    // Ordenação
+    switch (ordenacao) {
+        case 'preco-asc':
+            livrosFiltrados.sort((a, b) => a.preco - b.preco);
+            break;
+        case 'preco-desc':
+            livrosFiltrados.sort((a, b) => b.preco - a.preco);
+            break;
+        case 'nome-asc':
+            livrosFiltrados.sort((a, b) => a.titulo.localeCompare(b.titulo));
+            break;
+        // 'relevancia' e 'vendidos' precisariam de lógica de backend
+    }
+
+    exibirLivros(livrosFiltrados);
+}
 
 // Função para carregar todos os livros
 function carregarTodosLivros() {
@@ -30,7 +111,8 @@ function carregarTodosLivros() {
             if (data.erro) {
                 throw new Error(data.erro);
             }
-            exibirLivros(data);
+            todosLivros = data; // Armazena no cache
+            aplicarFiltros(); // Exibe os livros com os filtros padrão
         })
         .catch(error => {
             console.error('Erro ao carregar livros:', error);
@@ -41,49 +123,19 @@ function carregarTodosLivros() {
         });
 }
 
-// Função para buscar livros
+// Função para buscar livros (agora integrada com filtros)
 function buscarLivros() {
-    const termo = document.getElementById('busca-input').value.trim();
-    mostrarLoading(true);
-    
-    const url = termo ? `livros?action=buscar&termo=${encodeURIComponent(termo)}` : 'livros?action=listar';
-    
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            if (data.erro) {
-                throw new Error(data.erro);
-            }
-            exibirLivros(data);
-        })
-        .catch(error => {
-            console.error('Erro ao buscar livros:', error);
-            mostrarErro('Erro ao buscar livros: ' + error.message);
-        })
-        .finally(() => {
-            mostrarLoading(false);
-        });
+    aplicarFiltros();
 }
 
-// Função para filtrar por categoria
+// Função para filtrar por categoria (agora integrada com filtros)
 function filtrarPorCategoria(categoria) {
-    mostrarLoading(true);
-    
-    fetch(`livros?action=categoria&nome=${encodeURIComponent(categoria)}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.erro) {
-                throw new Error(data.erro);
-            }
-            exibirLivros(data);
-        })
-        .catch(error => {
-            console.error('Erro ao filtrar por categoria:', error);
-            mostrarErro('Erro ao filtrar livros: ' + error.message);
-        })
-        .finally(() => {
-            mostrarLoading(false);
-        });
+    // Marcar a checkbox correspondente e aplicar filtros
+    const checkbox = document.querySelector(`.filtro-categoria[value="${categoria}"]`);
+    if (checkbox) {
+        checkbox.checked = true;
+    }
+    aplicarFiltros();
 }
 
 // Função para exibir livros na tela
@@ -105,7 +157,8 @@ function exibirLivros(livros) {
                 <img src="${livro.imagem || 'images/no-image.jpg'}" 
                      class="card-img-top livro-imagem" 
                      alt="${livro.titulo}"
-                     onerror="this.src='images/no-image.jpg'">
+                     onerror="this.src='images/no-image.jpg'"
+                     onmouseover="mostrarPreviewRapido(${livro.id}, event)">
                 <div class="card-body d-flex flex-column">
                     <h6 class="card-title">${livro.titulo}</h6>
                     <p class="card-text text-muted small">por ${livro.autor}</p>
@@ -117,13 +170,20 @@ function exibirLivros(livros) {
                         </div>
                         <div class="mt-2">
                             <button class="btn btn-sm btn-outline-primary me-1" 
-                                    onclick="verDetalhes(${livro.id})">
-                                <i class="fas fa-eye"></i> Ver
+                                    onclick="verDetalhes(${livro.id})"
+                                    aria-label="Ver detalhes do livro ${livro.titulo}">
+                                <i class="fas fa-eye" aria-hidden="true"></i> Ver
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger me-1" 
+                                    onclick="toggleFavorito(${livro.id}, this)"
+                                    aria-label="Adicionar ${livro.titulo} à lista de desejos">
+                                <i class="far fa-heart" aria-hidden="true"></i>
                             </button>
                             <button class="btn btn-sm btn-primary" 
                                     onclick="adicionarAoCarrinho(${livro.id})"
-                                    ${livro.estoque === 0 ? 'disabled' : ''}>
-                                <i class="fas fa-cart-plus"></i> 
+                                    ${livro.estoque === 0 ? 'disabled' : ''}
+                                    aria-label="Adicionar ${livro.titulo} ao carrinho">
+                                <i class="fas fa-cart-plus" aria-hidden="true"></i> 
                                 ${livro.estoque === 0 ? 'Indisponível' : 'Comprar'}
                             </button>
                         </div>
@@ -138,77 +198,233 @@ function exibirLivros(livros) {
 
 // Função para ver detalhes do livro
 function verDetalhes(livroId) {
-    fetch(`livros?action=detalhes&id=${livroId}`)
+    const livro = todosLivros.find(l => l.id === livroId);
+    if (!livro) {
+        mostrarErro('Livro não encontrado');
+        return;
+    }
+    
+    livroSelecionado = livro;
+    
+    document.getElementById('detalhes-titulo').textContent = livro.titulo;
+    document.getElementById('detalhes-autor').textContent = livro.autor;
+    document.getElementById('detalhes-isbn').textContent = livro.isbn || 'Não informado';
+    document.getElementById('detalhes-categoria').textContent = livro.categoria;
+    document.getElementById('detalhes-preco').textContent = formatarPreco(livro.preco);
+    document.getElementById('detalhes-estoque').textContent = livro.estoque;
+    document.getElementById('detalhes-descricao').textContent = livro.descricao || 'Sem descrição disponível';
+    document.getElementById('detalhes-imagem').src = livro.imagem || 'images/no-image.jpg';
+    
+    // Carregar avaliações para o livro selecionado
+    carregarAvaliacoes(livroId);
+
+    new bootstrap.Modal(document.getElementById('detalhesModal')).show();
+}
+
+// ===== FUNÇÕES DE AVALIAÇÃO =====
+
+function abrirFormAvaliacao() {
+    const form = document.getElementById('form-avaliacao');
+    if (form.style.display === 'none') {
+        form.style.display = 'block';
+    } else {
+        form.style.display = 'none';
+    }
+}
+
+function preencherEstrelas(nota) {
+    document.querySelectorAll('.estrelas-selecao .estrela').forEach((estrela, index) => {
+        if (index < nota) {
+            estrela.textContent = '★'; // Estrela preenchida
+        } else {
+            estrela.textContent = '☆'; // Estrela vazia
+        }
+    });
+}
+
+function atualizarEstrelasSelecao() {
+    preencherEstrelas(notaSelecionada);
+}
+
+function enviarAvaliacao(event) {
+    event.preventDefault();
+    
+    if (!usuarioLogado) {
+        mostrarErro('Você precisa estar logado para enviar uma avaliação.');
+        return;
+    }
+
+    if (livroSelecionado === null) {
+        mostrarErro('Nenhum livro selecionado para avaliação.');
+        return;
+    }
+
+    const comentario = document.querySelector('#form-avaliacao textarea').value;
+
+    if (notaSelecionada === 0) {
+        mostrarErro('Por favor, selecione uma nota.');
+        return;
+    }
+
+    fetch('avaliacoes?action=criar', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            livroId: livroSelecionado.id,
+            nota: notaSelecionada,
+            comentario: comentario
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.sucesso) {
+            mostrarNotificacao('Avaliação enviada com sucesso!', 'success');
+            document.querySelector('#form-avaliacao textarea').value = '';
+            notaSelecionada = 0;
+            atualizarEstrelasSelecao();
+            abrirFormAvaliacao(); // Esconder formulário
+            carregarAvaliacoes(livroSelecionado.id); // Recarregar avaliações
+        } else {
+            mostrarErro(data.erro || 'Erro ao enviar avaliação.');
+        }
+    })
+    .catch(error => {
+        console.error('Erro ao enviar avaliação:', error);
+        mostrarErro('Erro ao enviar avaliação. Tente novamente.');
+    });
+}
+
+function carregarAvaliacoes(livroId) {
+    fetch(`avaliacoes?livroId=${livroId}`)
         .then(response => response.json())
-        .then(livro => {
-            if (livro.erro) {
-                throw new Error(livro.erro);
+        .then(data => {
+            const resumoAvaliacoes = document.querySelector('.resumo-avaliacoes');
+            const listaAvaliacoes = document.querySelector('.lista-avaliacoes');
+
+            // Atualizar resumo
+            if (data.estatisticas) {
+                const stats = data.estatisticas;
+                resumoAvaliacoes.querySelector('.nota-grande').textContent = stats.media_nota ? stats.media_nota.toFixed(1) : '0.0';
+                resumoAvaliacoes.querySelector('.estrelas-grandes').innerHTML = gerarEstrelasHTML(stats.media_nota);
+                resumoAvaliacoes.querySelector('small').textContent = `Baseado em ${stats.total_avaliacoes} avaliações`;
+
+                // Gráfico de barras
+                const total = stats.total_avaliacoes > 0 ? stats.total_avaliacoes : 1;
+                resumoAvaliacoes.querySelector('.grafico-estrelas').innerHTML = `
+                    <div class="linha-estrela">
+                        <span>5 ⭐</span>
+                        <div class="barra-progresso">
+                            <div class="barra-preenchida" style="width: ${((stats.cinco_estrelas || 0) / total * 100).toFixed(0)}%;"></div>
+                        </div>
+                        <span>${((stats.cinco_estrelas || 0) / total * 100).toFixed(0)}%</span>
+                    </div>
+                    <div class="linha-estrela">
+                        <span>4 ⭐</span>
+                        <div class="barra-progresso">
+                            <div class="barra-preenchida" style="width: ${((stats.quatro_estrelas || 0) / total * 100).toFixed(0)}%;"></div>
+                        </div>
+                        <span>${((stats.quatro_estrelas || 0) / total * 100).toFixed(0)}%</span>
+                    </div>
+                    <div class="linha-estrela">
+                        <span>3 ⭐</span>
+                        <div class="barra-progresso">
+                            <div class="barra-preenchida" style="width: ${((stats.tres_estrelas || 0) / total * 100).toFixed(0)}%;"></div>
+                        </div>
+                        <span>${((stats.tres_estrelas || 0) / total * 100).toFixed(0)}%</span>
+                    </div>
+                    <div class="linha-estrela">
+                        <span>2 ⭐</span>
+                        <div class="barra-progresso">
+                            <div class="barra-preenchida" style="width: ${((stats.duas_estrelas || 0) / total * 100).toFixed(0)}%;"></div>
+                        </div>
+                        <span>${((stats.duas_estrelas || 0) / total * 100).toFixed(0)}%</span>
+                    </div>
+                    <div class="linha-estrela">
+                        <span>1 ⭐</span>
+                        <div class="barra-progresso">
+                            <div class="barra-preenchida" style="width: ${((stats.uma_estrela || 0) / total * 100).toFixed(0)}%;"></div>
+                        </div>
+                        <span>${((stats.uma_estrela || 0) / total * 100).toFixed(0)}%</span>
+                    </div>
+                `;
+            } else {
+                resumoAvaliacoes.querySelector('.nota-grande').textContent = '0.0';
+                resumoAvaliacoes.querySelector('.estrelas-grandes').innerHTML = '☆☆☆☆☆';
+                resumoAvaliacoes.querySelector('small').textContent = 'Baseado em 0 avaliações';
+                resumoAvaliacoes.querySelector('.grafico-estrelas').innerHTML = '';
             }
-            
-            livroSelecionado = livro;
-            
-            document.getElementById('detalhes-titulo').textContent = livro.titulo;
-            document.getElementById('detalhes-autor').textContent = livro.autor;
-            document.getElementById('detalhes-isbn').textContent = livro.isbn || 'Não informado';
-            document.getElementById('detalhes-categoria').textContent = livro.categoria;
-            document.getElementById('detalhes-preco').textContent = formatarPreco(livro.preco);
-            document.getElementById('detalhes-estoque').textContent = livro.estoque;
-            document.getElementById('detalhes-descricao').textContent = livro.descricao || 'Sem descrição disponível';
-            document.getElementById('detalhes-imagem').src = livro.imagem || 'images/no-image.jpg';
-            
-            new bootstrap.Modal(document.getElementById('detalhesModal')).show();
+
+            // Listar avaliações
+            if (data.avaliacoes && data.avaliacoes.length > 0) {
+                listaAvaliacoes.innerHTML = data.avaliacoes.map(avaliacao => `
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title">${gerarEstrelasHTML(avaliacao.nota)}</h6>
+                            <p class="card-text">${avaliacao.comentario}</p>
+                            <small class="text-muted">Por Usuário ${avaliacao.usuarioId} em ${new Date(avaliacao.dataAvaliacao).toLocaleDateString()}</small>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                listaAvaliacoes.innerHTML = '<p class="text-muted">Nenhuma avaliação para este livro ainda.</p>';
+            }
         })
         .catch(error => {
-            console.error('Erro ao carregar detalhes:', error);
-            mostrarErro('Erro ao carregar detalhes do livro');
+            console.error('Erro ao carregar avaliações:', error);
+            mostrarErro('Erro ao carregar avaliações.');
         });
+}
+
+function gerarEstrelasHTML(nota) {
+    let html = '';
+    for (let i = 0; i < 5; i++) {
+        html += (i < Math.round(nota)) ? '★' : '☆';
+    }
+    return html;
 }
 
 // ===== FUNÇÕES DE CARRINHO =====
 
 // Função para adicionar ao carrinho
 function adicionarAoCarrinho(livroId) {
-    fetch(`livros?action=detalhes&id=${livroId}`)
-        .then(response => response.json())
-        .then(livro => {
-            if (livro.erro) {
-                throw new Error(livro.erro);
-            }
-            
-            if (livro.estoque === 0) {
-                mostrarErro('Livro indisponível no estoque');
-                return;
-            }
-            
-            const itemExistente = carrinho.find(item => item.id === livroId);
-            
-            if (itemExistente) {
-                if (itemExistente.quantidade < livro.estoque) {
-                    itemExistente.quantidade++;
-                    mostrarSucesso('Quantidade atualizada no carrinho!');
-                } else {
-                    mostrarErro('Quantidade máxima disponível no estoque');
-                    return;
-                }
-            } else {
-                carrinho.push({
-                    id: livro.id,
-                    titulo: livro.titulo,
-                    autor: livro.autor,
-                    preco: livro.preco,
-                    quantidade: 1,
-                    estoque: livro.estoque
-                });
-                mostrarSucesso('Livro adicionado ao carrinho!');
-            }
-            
-            salvarCarrinhoNoStorage();
-            atualizarContadorCarrinho();
-        })
-        .catch(error => {
-            console.error('Erro ao adicionar ao carrinho:', error);
-            mostrarErro('Erro ao adicionar livro ao carrinho');
+    const livro = todosLivros.find(l => l.id === livroId);
+    if (!livro) {
+        mostrarErro('Livro não encontrado');
+        return;
+    }
+    
+    if (livro.estoque === 0) {
+        mostrarErro('Livro indisponível no estoque');
+        return;
+    }
+    
+    const itemExistente = carrinho.find(item => item.id === livroId);
+    
+    if (itemExistente) {
+        if (itemExistente.quantidade < livro.estoque) {
+            itemExistente.quantidade++;
+            mostrarNotificacao('Quantidade atualizada no carrinho!', 'success');
+        } else {
+            mostrarErro('Quantidade máxima disponível no estoque');
+            return;
+        }
+    } else {
+        carrinho.push({
+            id: livro.id,
+            titulo: livro.titulo,
+            autor: livro.autor,
+            preco: livro.preco,
+            quantidade: 1,
+            estoque: livro.estoque
         });
+        mostrarNotificacao('Livro adicionado ao carrinho!', 'success');
+    }
+    
+    salvarCarrinhoNoStorage();
+    atualizarContadorCarrinho();
+    abrirCarrinhoLateral();
 }
 
 // Função para adicionar ao carrinho via modal
@@ -220,8 +436,9 @@ function adicionarAoCarrinhoModal() {
 }
 
 // Função para abrir carrinho
-function abrirCarrinho() {
-    const carrinhoItens = document.getElementById('carrinho-itens');
+function abrirCarrinhoLateral() {
+    const sidebar = document.getElementById('carrinho-sidebar');
+    const carrinhoItens = document.getElementById('carrinho-itens-lateral');
     
     if (carrinho.length === 0) {
         carrinhoItens.innerHTML = `
@@ -264,7 +481,11 @@ function abrirCarrinho() {
     }
     
     atualizarTotalCarrinho();
-    new bootstrap.Modal(document.getElementById('carrinhoModal')).show();
+    sidebar.classList.add('aberto');
+}
+
+function fecharCarrinhoLateral() {
+    document.getElementById('carrinho-sidebar').classList.remove('aberto');
 }
 
 // Função para alterar quantidade no carrinho
@@ -287,7 +508,7 @@ function alterarQuantidade(livroId, incremento) {
     item.quantidade = novaQuantidade;
     salvarCarrinhoNoStorage();
     atualizarContadorCarrinho();
-    abrirCarrinho(); // Recarregar o modal
+    abrirCarrinhoLateral(); // Recarregar o modal
 }
 
 // Função para remover do carrinho
@@ -295,8 +516,8 @@ function removerDoCarrinho(livroId) {
     carrinho = carrinho.filter(item => item.id !== livroId);
     salvarCarrinhoNoStorage();
     atualizarContadorCarrinho();
-    abrirCarrinho(); // Recarregar o modal
-    mostrarSucesso('Item removido do carrinho');
+    abrirCarrinhoLateral(); // Recarregar o modal
+    mostrarNotificacao('Item removido do carrinho', 'info');
 }
 
 // Função para finalizar compra
@@ -306,25 +527,14 @@ function finalizarCompra() {
         return;
     }
     
-    // Verificar se está logado
-    fetch('login?action=status')
-        .then(response => response.json())
-        .then(data => {
-            if (!data.logado) {
-                if (confirm('Você precisa estar logado para finalizar a compra. Deseja fazer login agora?')) {
-                    window.location.href = 'login.jsp';
-                }
-                return;
-            }
-            
-            // Redirecionar para página de checkout
-            window.location.href = 'checkout.jsp';
-        })
-        .catch(error => {
-            console.error('Erro ao verificar login:', error);
-            // Se não conseguir verificar, redirecionar para checkout mesmo assim
-            window.location.href = 'checkout.jsp';
-        });
+    if (!usuarioLogado) {
+        if (confirm('Você precisa estar logado para finalizar a compra. Deseja fazer login agora?')) {
+            window.location.href = 'login.jsp';
+        }
+        return;
+    }
+    
+    window.location.href = 'checkout.jsp';
 }
 
 // ===== FUNÇÕES DE AUTENTICAÇÃO =====
@@ -336,70 +546,15 @@ function verificarStatusLogin() {
         .then(data => {
             if (data.logado) {
                 usuarioLogado = data.usuario;
-                document.getElementById('login-text').textContent = data.usuario.nome;
-                // Pode adicionar mais elementos da UI aqui se necessário
+                // Atualizar UI se necessário
             } else {
                 usuarioLogado = null;
-                document.getElementById('login-text').textContent = 'Login';
             }
         })
         .catch(error => {
             console.error('Erro ao verificar status:', error);
             usuarioLogado = null;
         });
-}
-
-// Função para verificar login (quando clica no botão)
-function verificarLogin() {
-    if (usuarioLogado) {
-        // Usuário já está logado - mostrar menu
-        mostrarMenuUsuario(usuarioLogado);
-    } else {
-        // Verificar status atual e redirecionar
-        fetch('login?action=status')
-            .then(response => response.json())
-            .then(data => {
-                if (data.logado) {
-                    usuarioLogado = data.usuario;
-                    mostrarMenuUsuario(data.usuario);
-                } else {
-                    window.location.href = 'login.jsp';
-                }
-            })
-            .catch(error => {
-                console.error('Erro ao verificar login:', error);
-                window.location.href = 'login.jsp';
-            });
-    }
-}
-
-// Mostrar menu do usuário logado
-function mostrarMenuUsuario(usuario) {
-    const opcoes = [
-        { texto: 'Meus Pedidos', acao: () => window.location.href = 'meus-pedidos.jsp' },
-        { texto: 'Painel Admin', acao: () => window.location.href = 'admin/admin.jsp', admin: true },
-        { texto: 'Sair', acao: () => fazerLogout() }
-    ];
-    
-    // Criar menu simples com confirm (pode ser melhorado com modal)
-    let menu = `Olá, ${usuario.nome}!\n\nEscolha uma opção:\n`;
-    let contador = 1;
-    const opcoesVisiveis = opcoes.filter(opcao => !opcao.admin || usuario.tipo === 'admin');
-    
-    opcoesVisiveis.forEach((opcao, index) => {
-        menu += `${contador} - ${opcao.texto}\n`;
-        contador++;
-    });
-    
-    const escolha = prompt(menu + '\nDigite o número da opção:');
-    
-    if (escolha) {
-        const opcaoEscolhida = parseInt(escolha) - 1;
-        
-        if (opcoesVisiveis[opcaoEscolhida]) {
-            opcoesVisiveis[opcaoEscolhida].acao();
-        }
-    }
 }
 
 // Fazer logout
@@ -412,23 +567,14 @@ function fazerLogout() {
     .then(data => {
         if (data.sucesso) {
             usuarioLogado = null;
-            document.getElementById('login-text').textContent = 'Login';
-            mostrarSucesso('Logout realizado com sucesso');
-            // Limpar carrinho se desejar
-            // carrinho = [];
-            // salvarCarrinhoNoStorage();
-            // atualizarContadorCarrinho();
+            mostrarNotificacao('Logout realizado com sucesso', 'success');
+            window.location.reload();
         }
     })
     .catch(error => {
         console.error('Erro ao fazer logout:', error);
         mostrarErro('Erro ao fazer logout');
     });
-}
-
-// Função de login (compatibilidade com código antigo)
-function fazerLogin() {
-    window.location.href = 'login.jsp';
 }
 
 // ===== FUNÇÕES AUXILIARES =====
@@ -458,16 +604,19 @@ function atualizarContadorCarrinho() {
 
 // Atualizar total do carrinho
 function atualizarTotalCarrinho() {
-    const totalElement = document.getElementById('carrinho-total');
+    const totalElement = document.getElementById('carrinho-total-lateral');
     if (totalElement) {
         const total = carrinho.reduce((sum, item) => sum + (item.preco * item.quantidade), 0);
-        totalElement.textContent = formatarPreco(total);
+        totalElement.textContent = 'R$ ' + formatarPreco(total);
     }
 }
 
 // Formatar preço para exibição
 function formatarPreco(preco) {
-    return parseFloat(preco).toFixed(2).replace('.', ',');
+    if (typeof preco === 'string') {
+        preco = parseFloat(preco);
+    }
+    return preco.toFixed(2).replace('.', ',');
 }
 
 // Salvar carrinho no localStorage
@@ -492,125 +641,198 @@ function carregarCarrinhoDoStorage() {
     }
 }
 
-// Mostrar mensagem de sucesso
-function mostrarSucesso(mensagem) {
-    // Implementação com toast ou alert melhorado
-    if (typeof Swal !== 'undefined') {
-        // Se tiver SweetAlert2 carregado
-        Swal.fire({
-            icon: 'success',
-            title: 'Sucesso!',
-            text: mensagem,
-            timer: 3000,
-            showConfirmButton: false
-        });
-    } else {
-        // Fallback para alert simples
-        alert('✓ ' + mensagem);
-    }
+// Funções de notificação (usando alert como fallback)
+function mostrarNotificacao(mensagem, tipo = 'info', duracao = 3000) {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast-notificacao toast-${tipo}`;
+    toast.innerHTML = `
+        <div class="toast-conteudo">
+            <i class="fas ${obterIconeNotificacao(tipo)}"></i>
+            <span>${mensagem}</span>
+        </div>
+        <button class="toast-fechar" onclick="this.parentElement.remove()">×</button>
+    `;
+    
+    container.appendChild(toast);
+    
+    // Animação de entrada
+    setTimeout(() => toast.classList.add('show'), 10);
+    
+    // Auto remover
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, duracao);
 }
 
-// Mostrar mensagem de erro
+function obterIconeNotificacao(tipo) {
+    const icones = {
+        'success': 'fa-check-circle',
+        'error': 'fa-exclamation-circle',
+        'warning': 'fa-exclamation-triangle',
+        'info': 'fa-info-circle'
+    };
+    return icones[tipo] || icones.info;
+}
+
 function mostrarErro(mensagem) {
-    // Implementação com toast ou alert melhorado
-    if (typeof Swal !== 'undefined') {
-        // Se tiver SweetAlert2 carregado
-        Swal.fire({
-            icon: 'error',
-            title: 'Erro!',
-            text: mensagem,
-            confirmButtonText: 'OK'
-        });
+    mostrarNotificacao(mensagem, 'error');
+}
+
+function mostrarSugestoes(livros) {
+    const container = document.getElementById('sugestoes-busca');
+    
+    if (livros.length === 0) {
+        container.innerHTML = '<div class="p-3 text-muted">Nenhum resultado encontrado</div>';
     } else {
-        // Fallback para alert simples
-        alert('✗ ' + mensagem);
+        container.innerHTML = livros.map(livro => `
+            <div class="sugestao-item p-2" onclick="selecionarLivro(${livro.id})">
+                <div class="d-flex align-items-center">
+                    <img src="${livro.imagem}" width="40" height="60" class="me-2">
+                    <div>
+                        <div class="fw-bold">${livro.titulo}</div>
+                        <small class="text-muted">${livro.autor} - R$ ${formatarPreco(livro.preco)}</small>
+                    </div>
+                </div>
+            </div>
+        `).join('');
     }
+    
+    container.style.display = 'block';
 }
 
-// Mostrar informação
-function mostrarInfo(mensagem) {
-    if (typeof Swal !== 'undefined') {
-        Swal.fire({
-            icon: 'info',
-            title: 'Informação',
-            text: mensagem,
-            confirmButtonText: 'OK'
+function selecionarLivro(livroId) {
+    verDetalhes(livroId);
+    document.getElementById('sugestoes-busca').style.display = 'none';
+}
+
+function criarCarrinhoLateral() {
+    const sidebar = document.createElement('div');
+    sidebar.id = 'carrinho-sidebar';
+    sidebar.className = 'carrinho-sidebar';
+    sidebar.innerHTML = `
+        <div class="carrinho-header">
+            <h5><i class="fas fa-shopping-cart"></i> Meu Carrinho</h5>
+            <button class="btn-close" onclick="fecharCarrinhoLateral()"></button>
+        </div>
+        <div class="carrinho-body">
+            <div id="carrinho-itens-lateral"></div>
+        </div>
+        <div class="carrinho-footer">
+            <div class="d-flex justify-content-between mb-3">
+                <span class="fw-bold">Total:</span>
+                <span class="fw-bold" id="carrinho-total-lateral">R$ 0,00</span>
+            </div>
+            <button class="btn btn-primary w-100" onclick="finalizarCompra()">
+                Finalizar Compra
+            </button>
+            <button class="btn btn-outline-secondary w-100 mt-2" onclick="fecharCarrinhoLateral()">
+                Continuar Comprando
+            </button>
+        </div>
+    `;
+    document.body.appendChild(sidebar);
+}
+
+function carregarRecomendacoes() {
+    fetch('livros?action=recomendacoes')
+        .then(response => response.json())
+        .then(livros => {
+            const container = document.getElementById('recomendacoes-container');
+            container.innerHTML = livros.map(livro => `
+                <div class="card me-3" style="min-width: 200px;">
+                    <img src="${livro.imagem}" class="card-img-top" style="height: 250px;">
+                    <div class="card-body">
+                        <h6 class="card-title text-truncate">${livro.titulo}</h6>
+                        <p class="text-primary fw-bold">R$ ${formatarPreco(livro.preco)}</p>
+                        <button class="btn btn-sm btn-primary w-100" 
+                                onclick="adicionarAoCarrinho(${livro.id})">
+                            Comprar
+                        </button>
+                    </div>
+                </div>
+            `).join('');
         });
-    } else {
-        alert('ℹ ' + mensagem);
-    }
 }
 
-// ===== UTILITÁRIOS =====
-
-// Limpar formulário de busca
-function limparBusca() {
-    document.getElementById('busca-input').value = '';
-    carregarTodosLivros();
-}
-
-// Rolar para o topo
-function rolarParaTopo() {
-    window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
+function toggleFavorito(livroId, elemento) {
+    const isFavorito = elemento.classList.contains('favorito');
+    
+    fetch('favoritos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            action: isFavorito ? 'remover' : 'adicionar',
+            livroId: livroId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.sucesso) {
+            elemento.classList.toggle('favorito');
+            elemento.innerHTML = isFavorito ? '<i class="far fa-heart"></i>' : '<i class="fas fa-heart"></i>';
+            mostrarNotificacao(isFavorito ? 'Removido dos favoritos' : 'Adicionado aos favoritos', 'info');
+        } else {
+            mostrarErro(data.erro || 'Erro ao atualizar favoritos');
+        }
+    })
+    .catch(error => {
+        console.error('Erro ao atualizar favoritos:', error);
+        mostrarErro('Erro ao atualizar favoritos. Tente novamente.');
     });
 }
 
-// Validar email
-function validarEmail(email) {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email);
+// Debounce para eventos frequentes
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
 }
 
-// Formatar CPF (para uso futuro)
-function formatarCPF(cpf) {
-    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-}
+// Cache de requisições
+const cache = new Map();
 
-// Remover formatação de CPF
-function limparCPF(cpf) {
-    return cpf.replace(/\D/g, '');
-}
-
-// Debug do carrinho (função auxiliar para desenvolvimento)
-function debugCarrinho() {
-    console.log('=== DEBUG CARRINHO ===');
-    console.log('Itens no carrinho:', carrinho.length);
-    console.log('Carrinho:', carrinho);
-    console.log('Total:', carrinho.reduce((sum, item) => sum + (item.preco * item.quantidade), 0));
-    console.log('======================');
-}
-
-// Event listeners adicionais (para funcionalidades futuras)
-document.addEventListener('keydown', function(e) {
-    // ESC para fechar modals
-    if (e.key === 'Escape') {
-        const modals = document.querySelectorAll('.modal.show');
-        modals.forEach(modal => {
-            const modalInstance = bootstrap.Modal.getInstance(modal);
-            if (modalInstance) {
-                modalInstance.hide();
-            }
+function fetchComCache(url, opcoes = {}) {
+    const chaveCache = url + JSON.stringify(opcoes);
+    
+    if (cache.has(chaveCache)) {
+        const { data, timestamp } = cache.get(chaveCache);
+        const idadeCache = Date.now() - timestamp;
+        
+        // Cache válido por 5 minutos
+        if (idadeCache < 5 * 60 * 1000) {
+            return Promise.resolve(data);
+        }
+    }
+    
+    return fetch(url, opcoes)
+        .then(response => response.json())
+        .then(data => {
+            cache.set(chaveCache, { data, timestamp: Date.now() });
+            return data;
         });
-    }
-});
+}
 
-// Interceptar erros JavaScript globais
-window.addEventListener('error', function(e) {
-    console.error('Erro JavaScript capturado:', e.error);
-    // Não mostrar erro para o usuário em produção
-    if (window.location.hostname === 'localhost') {
-        mostrarErro('Erro JavaScript: ' + e.message);
-    }
-});
+// Preload de imagens
+function preloadImagens(urls) {
+    urls.forEach(url => {
+        const img = new Image();
+        img.src = url;
+    });
+}
 
-// Notificar quando a página perde o foco (para salvar dados)
-document.addEventListener('visibilitychange', function() {
-    if (document.hidden) {
-        // Página perdeu o foco - salvar dados importantes
-        salvarCarrinhoNoStorage();
-    }
-});
+// Service Worker para cache offline
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js');
+}
 
 console.log('📚 Livraria Online carregada com sucesso!');
