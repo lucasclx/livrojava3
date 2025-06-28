@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
+         http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+         version="3.0">
+    
+    <display-name>Livraria Online</display-name>
+    
+    <!-- Servlet de teste -->
+    <servlet>
+        <servlet-name>TestServlet</servlet-name>
+        <servlet-class>com.livraria.servlet.TestServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>TestServlet</servlet-name>
+        <url-pattern>/teste</url-pattern>
+    </servlet-mapping>
+    
+    <!-- Servlet para Login -->
+    <servlet>
+        <servlet-name>LoginServlet</servlet-name>
+        <servlet-class>com.livraria.servlet.LoginServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>LoginServlet</servlet-name>
+        <url-pattern>/login</url-pattern>
+    </servlet-mapping>
+    
+    <!-- Servlet para Livros -->
+    <servlet>
+        <servlet-name>LivroServlet</servlet-name>
+        <servlet-class>com.livraria.servlet.LivroServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>LivroServlet</servlet-name>
+        <url-pattern>/livros</url-pattern>
+    </servlet-mapping>
+    
+    <!-- Servlet para Carrinho -->
+    <servlet>
+        <servlet-name>CarrinhoServlet</servlet-name>
+        <servlet-class>com.livraria.servlet.CarrinhoServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>CarrinhoServlet</servlet-name>
+        <url-pattern>/carrinho</url-pattern>
+    </servlet-mapping>
+    
+    <!-- Servlet para Compras -->
+    <servlet>
+        <servlet-name>CompraServlet</servlet-name>
+        <servlet-class>com.livraria.servlet.CompraServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>CompraServlet</servlet-name>
+        <url-pattern>/compra</url-pattern>
+    </servlet-mapping>
+    
+    <!-- Listener para inicialização -->
+    <listener>
+        <listener-class>com.livraria.listener.ContextListener</listener-class>
+    </listener>
+    
+    <!-- Página inicial -->
+    <welcome-file-list>
+        <welcome-file>index.jsp</welcome-file>
+    </welcome-file-list>
+    
+    <!-- Configuração do banco de dados -->
+    <context-param>
+        <param-name>db.driver</param-name>
+        <param-value>com.mysql.cj.jdbc.Driver</param-value>
+    </context-param>
+    <context-param>
+        <param-name>db.url</param-name>
+        <param-value>jdbc:mysql://localhost:3306/livraria</param-value>
+    </context-param>
+    <context-param>
+        <param-name>db.username</param-name>
+        <param-value>root</param-value>
+    </context-param>
+    <context-param>
+        <param-name>db.password</param-name>
+        <param-value></param-value>
+    </context-param>
+    
+    <!-- Filtro de autenticação (desabilitado temporariamente) 
+    <filter>
+        <filter-name>AuthFilter</filter-name>
+        <filter-class>com.livraria.filter.AuthFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>AuthFilter</filter-name>
+        <url-pattern>/admin/*</url-pattern>
+    </filter-mapping>
+    -->
+    
+    <!-- Configuração de encoding -->
+    <filter>
+        <filter-name>EncodingFilter</filter-name>
+        <filter-class>com.livraria.filter.EncodingFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>EncodingFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+    
+    <!-- Configuração de sessão -->
+    <session-config>
+        <session-timeout>30</session-timeout>
+    </session-config>
+</web-app>
