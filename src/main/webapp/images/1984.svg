@@ -1,0 +1,6 @@
+<svg width="200" height="300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="200" height="300" fill="#000" rx="8"/>
+  <rect x="10" y="10" width="180" height="280" fill="#333" rx="4"/>
+  <text x="100" y="100" text-anchor="middle" font-family="Arial" font-size="48" fill="#FF0000" font-weight="bold">1984</text>
+  <text x="100" y="250" text-anchor="middle" font-family="Arial" font-size="14" fill="#FFF">George Orwell</text>
+</svg>

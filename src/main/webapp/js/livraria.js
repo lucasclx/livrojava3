@@ -691,7 +691,8 @@ function mostrarSugestoes(livros) {
         container.innerHTML = livros.map(livro => `
             <div class="sugestao-item p-2" onclick="selecionarLivro(${livro.id})">
                 <div class="d-flex align-items-center">
-                    <img src="${livro.imagem}" width="40" height="60" class="me-2">
+                    <img src="${livro.imagem || 'images/no-image.jpg'}" width="40" height="60" class="me-2" 
+                    onerror="this.src='images/no-image.jpg'">
                     <div>
                         <div class="fw-bold">${livro.titulo}</div>
                         <small class="text-muted">${livro.autor} - R$ ${formatarPreco(livro.preco)}</small>

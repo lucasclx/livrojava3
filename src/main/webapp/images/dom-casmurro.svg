@@ -1,0 +1,7 @@
+<svg width="200" height="300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="200" height="300" fill="#8B4513" rx="8"/>
+  <rect x="10" y="10" width="180" height="280" fill="#D2691E" rx="4"/>
+  <text x="100" y="50" text-anchor="middle" font-family="serif" font-size="18" fill="#FFF" font-weight="bold">DOM</text>
+  <text x="100" y="80" text-anchor="middle" font-family="serif" font-size="18" fill="#FFF" font-weight="bold">CASMURRO</text>
+  <text x="100" y="250" text-anchor="middle" font-family="serif" font-size="12" fill="#FFF">Machado de Assis</text>
+</svg>

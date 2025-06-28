@@ -3,6 +3,8 @@ package com.livraria.servlet;
 import com.livraria.dao.ListaDesejosDAO;
 import com.google.gson.Gson;
 import java.io.IOException;
+import java.sql.SQLException;
+import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;

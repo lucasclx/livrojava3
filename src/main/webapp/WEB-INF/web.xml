@@ -6,139 +6,391 @@
          version="3.0">
     
     <display-name>Livraria Online</display-name>
+    <description>Sistema de e-commerce para vendas de livros online</description>
     
-    <!-- Servlet de teste -->
+    <!-- ============================================== -->
+    <!-- CONFIGURAÇÕES DE CONTEXTO E PARÂMETROS -->
+    <!-- ============================================== -->
+    
+    <!-- Configurações do Banco de Dados -->
+    <context-param>
+        <param-name>db.driver</param-name>
+        <param-value>com.mysql.cj.jdbc.Driver</param-value>
+        <description>Driver JDBC para MySQL</description>
+    </context-param>
+    
+    <context-param>
+        <param-name>db.url</param-name>
+        <param-value>jdbc:mysql://localhost:3306/livraria?useSSL=false&amp;serverTimezone=UTC&amp;allowPublicKeyRetrieval=true</param-value>
+        <description>URL de conexão com o banco MySQL</description>
+    </context-param>
+    
+    <context-param>
+        <param-name>db.username</param-name>
+        <param-value>root</param-value>
+        <description>Usuário do banco de dados</description>
+    </context-param>
+    
+    <context-param>
+        <param-name>db.password</param-name>
+        <param-value></param-value>
+        <description>Senha do banco de dados (deixe vazio se não tiver senha)</description>
+    </context-param>
+    
+    <!-- Configurações da Aplicação -->
+    <context-param>
+        <param-name>app.name</param-name>
+        <param-value>Livraria Online</param-value>
+    </context-param>
+    
+    <context-param>
+        <param-name>app.version</param-name>
+        <param-value>2.0</param-value>
+    </context-param>
+    
+    <!-- ============================================== -->
+    <!-- LISTENERS -->
+    <!-- ============================================== -->
+    
+    <!-- Context Listener para inicialização da aplicação -->
+    <listener>
+        <listener-class>com.livraria.listener.ContextListener</listener-class>
+        <description>Listener para inicialização do contexto da aplicação</description>
+    </listener>
+    
+    <!-- ============================================== -->
+    <!-- FILTROS -->
+    <!-- ============================================== -->
+    
+    <!-- Filtro de Encoding UTF-8 -->
+    <filter>
+        <filter-name>EncodingFilter</filter-name>
+        <filter-class>com.livraria.filter.EncodingFilter</filter-class>
+        <description>Filtro para garantir encoding UTF-8 em todas as requisições</description>
+    </filter>
+    
+    <filter-mapping>
+        <filter-name>EncodingFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+        <dispatcher>REQUEST</dispatcher>
+        <dispatcher>FORWARD</dispatcher>
+        <dispatcher>INCLUDE</dispatcher>
+    </filter-mapping>
+    
+    <!-- Filtro de Autenticação (opcional) -->
+    <filter>
+        <filter-name>AuthFilter</filter-name>
+        <filter-class>com.livraria.filter.AuthFilter</filter-class>
+        <description>Filtro para controle de autenticação (desabilitado por padrão)</description>
+    </filter>
+    
+    <!-- Mapeamento do AuthFilter para páginas protegidas -->
+    <filter-mapping>
+        <filter-name>AuthFilter</filter-name>
+        <url-pattern>/admin/*</url-pattern>
+        <url-pattern>/checkout.jsp</url-pattern>
+        <url-pattern>/meus-pedidos.jsp</url-pattern>
+        <url-pattern>/minha-conta.jsp</url-pattern>
+    </filter-mapping>
+    
+    <!-- ============================================== -->
+    <!-- SERVLETS -->
+    <!-- ============================================== -->
+    
+    <!-- Servlet de Teste -->
     <servlet>
         <servlet-name>TestServlet</servlet-name>
         <servlet-class>com.livraria.servlet.TestServlet</servlet-class>
+        <description>Servlet para testar funcionamento da aplicação</description>
         <load-on-startup>1</load-on-startup>
     </servlet>
+    
     <servlet-mapping>
         <servlet-name>TestServlet</servlet-name>
         <url-pattern>/teste</url-pattern>
     </servlet-mapping>
     
-    <!-- Servlet para Login -->
+    <!-- Servlet de Login e Autenticação -->
     <servlet>
         <servlet-name>LoginServlet</servlet-name>
         <servlet-class>com.livraria.servlet.LoginServlet</servlet-class>
+        <description>Servlet para login, logout e registro de usuários</description>
+        <multipart-config>
+            <max-file-size>2097152</max-file-size>
+            <max-request-size>4194304</max-request-size>
+            <file-size-threshold>1048576</file-size-threshold>
+        </multipart-config>
     </servlet>
+    
     <servlet-mapping>
         <servlet-name>LoginServlet</servlet-name>
         <url-pattern>/login</url-pattern>
     </servlet-mapping>
     
-    <!-- Servlet para Livros -->
+    <!-- Servlet de Livros -->
     <servlet>
         <servlet-name>LivroServlet</servlet-name>
         <servlet-class>com.livraria.servlet.LivroServlet</servlet-class>
+        <description>Servlet para operações com livros (listar, buscar, detalhes)</description>
     </servlet>
+    
     <servlet-mapping>
         <servlet-name>LivroServlet</servlet-name>
         <url-pattern>/livros</url-pattern>
     </servlet-mapping>
     
-    <!-- Servlet para Carrinho -->
+    <!-- Servlet do Carrinho de Compras -->
     <servlet>
         <servlet-name>CarrinhoServlet</servlet-name>
         <servlet-class>com.livraria.servlet.CarrinhoServlet</servlet-class>
+        <description>Servlet para gerenciamento do carrinho de compras</description>
     </servlet>
+    
     <servlet-mapping>
         <servlet-name>CarrinhoServlet</servlet-name>
         <url-pattern>/carrinho</url-pattern>
     </servlet-mapping>
     
-    <!-- Servlet para Compras -->
+    <!-- Servlet de Compras -->
     <servlet>
         <servlet-name>CompraServlet</servlet-name>
         <servlet-class>com.livraria.servlet.CompraServlet</servlet-class>
+        <description>Servlet para finalização de compras e pedidos</description>
     </servlet>
+    
     <servlet-mapping>
         <servlet-name>CompraServlet</servlet-name>
         <url-pattern>/compra</url-pattern>
     </servlet-mapping>
-
-    <!-- Servlet para Avaliacoes -->
+    
+    <!-- Servlet de Avaliações -->
     <servlet>
         <servlet-name>AvaliacaoServlet</servlet-name>
         <servlet-class>com.livraria.servlet.AvaliacaoServlet</servlet-class>
+        <description>Servlet para avaliações e comentários dos livros</description>
     </servlet>
+    
     <servlet-mapping>
         <servlet-name>AvaliacaoServlet</servlet-name>
         <url-pattern>/avaliacoes</url-pattern>
     </servlet-mapping>
-
-    <!-- Servlet para Lista de Desejos -->
+    
+    <!-- Servlet de Lista de Desejos -->
     <servlet>
         <servlet-name>ListaDesejosServlet</servlet-name>
         <servlet-class>com.livraria.servlet.ListaDesejosServlet</servlet-class>
+        <description>Servlet para gerenciamento da lista de desejos/favoritos</description>
     </servlet>
+    
     <servlet-mapping>
         <servlet-name>ListaDesejosServlet</servlet-name>
         <url-pattern>/favoritos</url-pattern>
     </servlet-mapping>
-
-    <!-- Servlet para Cupons -->
+    
+    <!-- Servlet de Cupons de Desconto -->
     <servlet>
         <servlet-name>CupomServlet</servlet-name>
         <servlet-class>com.livraria.servlet.CupomServlet</servlet-class>
+        <description>Servlet para validação e aplicação de cupons de desconto</description>
     </servlet>
+    
     <servlet-mapping>
         <servlet-name>CupomServlet</servlet-name>
         <url-pattern>/cupom</url-pattern>
     </servlet-mapping>
     
-    <!-- Listener para inicialização -->
-    <listener>
-        <listener-class>com.livraria.listener.ContextListener</listener-class>
-    </listener>
+    <!-- ============================================== -->
+    <!-- SERVLETS ADMINISTRATIVOS -->
+    <!-- ============================================== -->
     
-    <!-- Página inicial -->
+    <!-- Servlet Administrativo para Livros -->
+    <servlet>
+        <servlet-name>AdminLivroServlet</servlet-name>
+        <servlet-class>com.livraria.servlet.admin.AdminLivroServlet</servlet-class>
+        <description>Servlet administrativo para CRUD de livros</description>
+    </servlet>
+    
+    <servlet-mapping>
+        <servlet-name>AdminLivroServlet</servlet-name>
+        <url-pattern>/admin/livros</url-pattern>
+    </servlet-mapping>
+    
+    <!-- ============================================== -->
+    <!-- CONFIGURAÇÕES DE SESSÃO -->
+    <!-- ============================================== -->
+    
+    <session-config>
+        <session-timeout>30</session-timeout>
+        <cookie-config>
+            <name>JSESSIONID</name>
+            <http-only>true</http-only>
+            <secure>false</secure>
+            <max-age>1800</max-age>
+        </cookie-config>
+        <tracking-mode>COOKIE</tracking-mode>
+    </session-config>
+    
+    <!-- ============================================== -->
+    <!-- PÁGINAS DE BOAS-VINDAS -->
+    <!-- ============================================== -->
+    
     <welcome-file-list>
         <welcome-file>index.jsp</welcome-file>
         <welcome-file>teste-simples.jsp</welcome-file>
+        <welcome-file>index.html</welcome-file>
     </welcome-file-list>
     
-    <!-- Configuração do banco de dados -->
-    <context-param>
-        <param-name>db.driver</param-name>
-        <param-value>com.mysql.cj.jdbc.Driver</param-value>
-    </context-param>
-    <context-param>
-        <param-name>db.url</param-name>
-        <param-value>jdbc:mysql://localhost:3306/livraria?useSSL=false&amp;serverTimezone=UTC</param-value>
-    </context-param>
-    <context-param>
-        <param-name>db.username</param-name>
-        <param-value>root</param-value>
-    </context-param>
-    <context-param>
-        <param-name>db.password</param-name>
-        <param-value></param-value>
-    </context-param>
+    <!-- ============================================== -->
+    <!-- CONFIGURAÇÕES DE MIME TYPES -->
+    <!-- ============================================== -->
     
-    <!-- Configuração de encoding -->
-    <filter>
-        <filter-name>EncodingFilter</filter-name>
-        <filter-class>com.livraria.filter.EncodingFilter</filter-class>
-    </filter>
-    <filter-mapping>
-        <filter-name>EncodingFilter</filter-name>
-        <url-pattern>/*</url-pattern>
-    </filter-mapping>
+    <mime-mapping>
+        <extension>svg</extension>
+        <mime-type>image/svg+xml</mime-type>
+    </mime-mapping>
     
-    <!-- Configuração de sessão -->
-    <session-config>
-        <session-timeout>30</session-timeout>
-    </session-config>
+    <mime-mapping>
+        <extension>json</extension>
+        <mime-type>application/json</mime-type>
+    </mime-mapping>
     
-    <!-- Página de erro -->
+    <mime-mapping>
+        <extension>woff</extension>
+        <mime-type>font/woff</mime-type>
+    </mime-mapping>
+    
+    <mime-mapping>
+        <extension>woff2</extension>
+        <mime-type>font/woff2</mime-type>
+    </mime-mapping>
+    
+    <!-- ============================================== -->
+    <!-- PÁGINAS DE ERRO -->
+    <!-- ============================================== -->
+    
+    <error-page>
+        <error-code>400</error-code>
+        <location>/erro.jsp</location>
+    </error-page>
+    
+    <error-page>
+        <error-code>401</error-code>
+        <location>/erro.jsp</location>
+    </error-page>
+    
+    <error-page>
+        <error-code>403</error-code>
+        <location>/erro.jsp</location>
+    </error-page>
+    
     <error-page>
         <error-code>404</error-code>
         <location>/erro.jsp</location>
     </error-page>
+    
     <error-page>
         <error-code>500</error-code>
         <location>/erro.jsp</location>
     </error-page>
+    
+    <error-page>
+        <exception-type>java.lang.Exception</exception-type>
+        <location>/erro.jsp</location>
+    </error-page>
+    
+    <error-page>
+        <exception-type>java.sql.SQLException</exception-type>
+        <location>/erro.jsp</location>
+    </error-page>
+    
+    <!-- ============================================== -->
+    <!-- CONFIGURAÇÕES DE SEGURANÇA -->
+    <!-- ============================================== -->
+    
+    <!-- Configuração de segurança para páginas administrativas -->
+    <security-constraint>
+        <display-name>Admin Area</display-name>
+        <web-resource-collection>
+            <web-resource-name>Admin Pages</web-resource-name>
+            <url-pattern>/admin/*</url-pattern>
+            <http-method>GET</http-method>
+            <http-method>POST</http-method>
+            <http-method>PUT</http-method>
+            <http-method>DELETE</http-method>
+        </web-resource-collection>
+        <!-- Comentado para permitir acesso livre durante desenvolvimento -->
+        <!--
+        <auth-constraint>
+            <role-name>admin</role-name>
+        </auth-constraint>
+        -->
+    </security-constraint>
+    
+    <!-- ============================================== -->
+    <!-- CONFIGURAÇÕES DE RECURSOS -->
+    <!-- ============================================== -->
+    
+    <!-- Configuração para servir arquivos estáticos com cache -->
+    <servlet>
+        <servlet-name>default</servlet-name>
+        <init-param>
+            <param-name>listings</param-name>
+            <param-value>false</param-value>
+        </init-param>
+    </servlet>
+    
+    <!-- ============================================== -->
+    <!-- CONFIGURAÇÕES DE COMPRESSÃO E CACHE -->
+    <!-- ============================================== -->
+    
+    <!-- Headers de cache para recursos estáticos -->
+    <filter>
+        <filter-name>CacheFilter</filter-name>
+        <filter-class>org.apache.catalina.filters.ExpiresFilter</filter-class>
+        <init-param>
+            <param-name>ExpiresByType image</param-name>
+            <param-value>access plus 1 month</param-value>
+        </init-param>
+        <init-param>
+            <param-name>ExpiresByType text/css</param-name>
+            <param-value>access plus 1 week</param-value>
+        </init-param>
+        <init-param>
+            <param-name>ExpiresByType application/javascript</param-name>
+            <param-value>access plus 1 week</param-value>
+        </init-param>
+    </filter>
+    
+    <filter-mapping>
+        <filter-name>CacheFilter</filter-name>
+        <url-pattern>*.css</url-pattern>
+        <url-pattern>*.js</url-pattern>
+        <url-pattern>*.png</url-pattern>
+        <url-pattern>*.jpg</url-pattern>
+        <url-pattern>*.jpeg</url-pattern>
+        <url-pattern>*.gif</url-pattern>
+        <url-pattern>*.svg</url-pattern>
+        <url-pattern>*.woff</url-pattern>
+        <url-pattern>*.woff2</url-pattern>
+    </filter-mapping>
+    
+    <!-- ============================================== -->
+    <!-- CONFIGURAÇÕES DE JSP -->
+    <!-- ============================================== -->
+    
+    <jsp-config>
+        <jsp-property-group>
+            <url-pattern>*.jsp</url-pattern>
+            <page-encoding>UTF-8</page-encoding>
+            <scripting-invalid>false</scripting-invalid>
+            <include-prelude>/WEB-INF/jsp/prelude.jspf</include-prelude>
+        </jsp-property-group>
+    </jsp-config>
+    
+    <!-- ============================================== -->
+    <!-- CONFIGURAÇÕES DE DISTRIBUIÇÃO -->
+    <!-- ============================================== -->
+    
+    <distributable/>
+    
 </web-app>

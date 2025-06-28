@@ -1,0 +1,71 @@
+<%-- 
+    Arquivo prelude JSP para configurações globais da Livraria Online
+    Este arquivo é incluído automaticamente em todas as páginas JSP
+    Local: src/main/webapp/WEB-INF/jsp/prelude.jspf
+--%>
+
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page session="true" %>
+<%@ page errorPage="/erro.jsp" %>
+
+<%-- Tags JSTL (se necessário no futuro) --%>
+<%-- <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %> --%>
+<%-- <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %> --%>
+
+<%-- Configurações globais para todas as páginas JSP --%>
+<%
+    // Configurar encoding para todas as páginas
+    response.setCharacterEncoding("UTF-8");
+    
+    // Configurar cabeçalhos de cache (desenvolvimento)
+    response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    response.setHeader("Pragma", "no-cache");
+    response.setDateHeader("Expires", 0);
+    
+    // Variáveis globais úteis
+    String contextPath = request.getContextPath();
+    String serverName = request.getServerName();
+    int serverPort = request.getServerPort();
+    String baseURL = request.getScheme() + "://" + serverName + ":" + serverPort + contextPath;
+%>
+
+<%-- Disponibilizar variáveis para uso nas páginas JSP --%>
+<% 
+    pageContext.setAttribute("contextPath", contextPath);
+    pageContext.setAttribute("baseURL", baseURL);
+%>
+
+<%-- Meta tags padrão para SEO e responsividade --%>
+<script>
+    // Variáveis JavaScript globais disponíveis em todas as páginas
+    window.CONTEXT_PATH = '<%= contextPath %>';
+    window.BASE_URL = '<%= baseURL %>';
+    
+    // Configuração global para AJAX
+    if (typeof $ !== 'undefined') {
+        $.ajaxSetup({
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            }
+        });
+    }
+    
+    // Log de debug
+    console.log('🔧 Prelude JSP carregado:', {
+        contextPath: '<%= contextPath %>',
+        baseURL: '<%= baseURL %>',
+        sessionId: '<%= session.getId() %>'
+    });
+</script>
+
+<%-- Função utilitária para formatação de preços --%>
+<%!
+    public String formatarPreco(double preco) {
+        return String.format("%.2f", preco).replace(".", ",");
+    }
+    
+    public String formatarPreco(java.math.BigDecimal preco) {
+        if (preco == null) return "0,00";
+        return formatarPreco(preco.doubleValue());
+    }
+%>

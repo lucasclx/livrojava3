@@ -92,7 +92,7 @@ public class LivroServlet extends HttpServlet {
     private void obterDetalhesLivro(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, IOException {
         String idParam = request.getParameter("id");
-        if (idParam == null) {
+        if (idParam == null || idParam.trim().isEmpty()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             response.getWriter().write("{\"erro\":\"ID do livro é obrigatório\"}");
             return;
@@ -100,6 +100,9 @@ public class LivroServlet extends HttpServlet {
         
         try {
             int id = Integer.parseInt(idParam);
+            if (id <= 0) {
+                throw new NumberFormatException("ID deve ser positivo");
+            }
             Livro livro = livroDAO.buscarPorId(id);
             
             if (livro != null) {

@@ -57,7 +57,7 @@ public class Avaliacao {
     }
 
     public void setDataAvaliacao(Timestamp dataAvaliacao) {
-        this.dataAvaliacao = dataAvaliaco;
+        this.dataAvaliacao = dataAvaliacao;
     }
 
     public int getUtil() {

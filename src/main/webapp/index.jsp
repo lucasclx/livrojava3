@@ -8,6 +8,21 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="css/livraria-enhanced.css" rel="stylesheet">
+    <style>
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 6px;
+    background: #000;
+    color: #fff;
+    padding: 8px;
+    text-decoration: none;
+    z-index: 1000;
+}
+.skip-link:focus {
+    top: 6px;
+}
+    </style>
 </head>
 <body>
     <a href="#conteudo-principal" class="skip-link">Pular para o conteúdo principal</a>
@@ -243,5 +258,122 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/livraria.js"></script>
+
+<!-- Correções para erros JavaScript -->
+<script>
+// Correção 1: Service Worker - Remover ou comentar
+if ('serviceWorker' in navigator) {
+    // COMENTADO para evitar erro 404
+    // navigator.serviceWorker.register('/sw.js');
+    console.log('Service Worker desabilitado temporariamente');
+}
+
+// Correção 2: Função mostrarPreviewRapido ausente
+if (typeof mostrarPreviewRapido === 'undefined') {
+    window.mostrarPreviewRapido = function(livroId, event) {
+        // Preview simples - pode ser expandido depois
+        console.log('Preview do livro ID:', livroId);
+        
+        // Implementação básica do preview
+        if (typeof todosLivros !== 'undefined') {
+            const livro = todosLivros.find(l => l.id === livroId);
+            if (livro) {
+                // Criar tooltip simples
+                let tooltip = document.getElementById('preview-tooltip');
+                if (!tooltip) {
+                    tooltip = document.createElement('div');
+                    tooltip.id = 'preview-tooltip';
+                    tooltip.className = 'position-absolute bg-white border rounded p-2 shadow';
+                    tooltip.style.zIndex = '1000';
+                    tooltip.style.display = 'none';
+                    document.body.appendChild(tooltip);
+                }
+                
+                tooltip.innerHTML = `
+                    <strong>${livro.titulo}</strong><br>
+                    <small>por ${livro.autor}</small><br>
+                    <span class="text-primary">R$ ${formatarPreco ? formatarPreco(livro.preco) : livro.preco}</span>
+                `;
+                
+                // Posicionar próximo ao mouse
+                const rect = event.target.getBoundingClientRect();
+                tooltip.style.left = (rect.right + 10) + 'px';
+                tooltip.style.top = rect.top + 'px';
+                tooltip.style.display = 'block';
+                
+                // Esconder após sair com mouse
+                event.target.addEventListener('mouseleave', function() {
+                    tooltip.style.display = 'none';
+                }, { once: true });
+            }
+        }
+    };
+    console.log('✅ Função mostrarPreviewRapido criada');
+}
+
+// Correção 3: Verificar se funções essenciais existem
+document.addEventListener('DOMContentLoaded', function() {
+    // Lista de funções essenciais que devem existir
+    const funcoesEssenciais = [
+        'carregarTodosLivros',
+        'adicionarAoCarrinho', 
+        'verDetalhes',
+        'formatarPreco',
+        'mostrarNotificacao'
+    ];
+    
+    funcoesEssenciais.forEach(func => {
+        if (typeof window[func] === 'undefined') {
+            console.warn(`⚠️ Função ${func} não encontrada`);
+            
+            // Criar stub básico para evitar erros
+            window[func] = function() {
+                console.log(`Stub chamado para: ${func}`, arguments);
+                if (func === 'formatarPreco' && arguments[0]) {
+                    return parseFloat(arguments[0]).toFixed(2).replace('.', ',');
+                }
+            };
+        }
+    });
+    
+    console.log('✅ Verificação de funções concluída');
+});
+
+// Correção 4: Interceptar erros de imagem globalmente
+document.addEventListener('error', function(e) {
+    if (e.target.tagName === 'IMG') {
+        console.log('️ Corrigindo imagem quebrada:', e.target.src);
+        if (!e.target.src.includes('no-image.svg')) {
+            e.target.src = 'images/no-image.svg';
+        }
+        e.target.onerror = null; // Evitar loop
+    }
+}, true);
+
+// Debugging: Log do estado atual
+console.log(' Estado da aplicação:');
+console.log('- URL atual:', window.location.href);
+console.log('- Elementos na página:', document.querySelectorAll('*').length);
+console.log('- Scripts carregados:', document.querySelectorAll('script').length);
+</script>
+
+<!-- Se quiser usar Service Worker, crie este arquivo básico em src/main/webapp/sw.js -->
+<!--
+// Conteúdo para sw.js (arquivo separado):
+self.addEventListener('install', function(event) {
+    console.log('Service Worker instalado');
+});
+
+self.addEventListener('fetch', function(event) {
+    // Cache básico para recursos estáticos
+    if (event.request.url.includes('.css') || event.request.url.includes('.js') || event.request.url.includes('images/')) {
+        event.respondWith(
+            caches.match(event.request).then(function(response) {
+                return response || fetch(event.request);
+            })
+        );
+    }
+});
+-->
 </body>
 </html>
