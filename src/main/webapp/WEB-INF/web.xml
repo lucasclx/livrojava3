@@ -171,7 +171,6 @@
         <description>Servlet para avaliações e comentários dos livros</description>
     </servlet>
     
-<<<<<<< HEAD
     <servlet-mapping>
         <servlet-name>AvaliacaoServlet</servlet-name>
         <url-pattern>/avaliacoes</url-pattern>
@@ -220,41 +219,6 @@
     <!-- ============================================== -->
     <!-- CONFIGURAÇÕES DE SESSÃO -->
     <!-- ============================================== -->
-=======
-    <!-- Página inicial -->
-    <welcome-file-list>
-        <welcome-file>index.jsp</welcome-file>
-        <welcome-file>teste-simples.jsp</welcome-file>
-    </welcome-file-list>
-    
-    <!-- Configuração do banco de dados -->
-    <context-param>
-        <param-name>db.driver</param-name>
-        <param-value>com.mysql.cj.jdbc.Driver</param-value>
-    </context-param>
-    <context-param>
-        <param-name>db.url</param-name>
-        <param-value>jdbc:mysql://localhost:3306/livraria?useSSL=false&amp;serverTimezone=UTC</param-value>
-    </context-param>
-    <context-param>
-        <param-name>db.username</param-name>
-        <param-value>root</param-value>
-    </context-param>
-    <context-param>
-        <param-name>db.password</param-name>
-        <param-value></param-value>
-    </context-param>
-    
-    <!-- Configuração de encoding -->
-    <filter>
-        <filter-name>EncodingFilter</filter-name>
-        <filter-class>com.livraria.filter.EncodingFilter</filter-class>
-    </filter>
-    <filter-mapping>
-        <filter-name>EncodingFilter</filter-name>
-        <url-pattern>/*</url-pattern>
-    </filter-mapping>
->>>>>>> 2fa591a (favorzinho2)
     
     <session-config>
         <session-timeout>30</session-timeout>
@@ -267,7 +231,6 @@
         <tracking-mode>COOKIE</tracking-mode>
     </session-config>
     
-<<<<<<< HEAD
     <!-- ============================================== -->
     <!-- PÁGINAS DE BOAS-VINDAS -->
     <!-- ============================================== -->
@@ -321,22 +284,15 @@
         <location>/erro.jsp</location>
     </error-page>
     
-=======
-    <!-- Página de erro -->
->>>>>>> 2fa591a (favorzinho2)
     <error-page>
         <error-code>404</error-code>
         <location>/erro.jsp</location>
     </error-page>
-<<<<<<< HEAD
     
-=======
->>>>>>> 2fa591a (favorzinho2)
     <error-page>
         <error-code>500</error-code>
         <location>/erro.jsp</location>
     </error-page>
-<<<<<<< HEAD
     
     <error-page>
         <exception-type>java.lang.Exception</exception-type>
@@ -438,6 +394,4 @@
     
     <distributable/>
     
-=======
->>>>>>> 2fa591a (favorzinho2)
 </web-app>
