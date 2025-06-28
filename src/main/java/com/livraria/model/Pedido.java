@@ -1,12 +1,10 @@
 package com.livraria.model;
 
-import java.io.Serializable;
-
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 
-public class Pedido  implements Serializable {
-    private static final long serialVersionUID = 1L;
+public class Pedido {
+
     private int id;
     private Integer usuarioId;
     private BigDecimal total;

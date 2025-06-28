@@ -1,11 +1,10 @@
 package com.livraria.model;
 
-import java.io.Serializable;
+
 import java.sql.Timestamp;
 
-public class Usuario implements Serializable {
-    private static final long serialVersionUID = 1L;
-    
+public class Usuario {
+
     private int id;
     private String nome;
     private String email;

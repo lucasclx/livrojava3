@@ -53,12 +53,18 @@
                     <span id="carrinho-contador" class="carrinho-contador" style="display: none;">0</span>
                 </button>
                 
+<<<<<<< HEAD
                 <a href="login.jsp" class="btn btn-outline-light me-2">
                     <i class="fas fa-user"></i> Login
                 </a>
                 <a href="minha-conta.jsp" class="btn btn-outline-light">
                     <i class="fas fa-user-circle"></i> Minha Conta
                 </a>
+=======
+                <a href="login.jsp" class="btn btn-outline-light">
+                    <i class="fas fa-user"></i> Login
+                </a>
+>>>>>>> 2fa591a (favorzinho2)
             </div>
         </div>
     </nav>

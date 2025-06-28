@@ -5,17 +5,25 @@ import com.livraria.model.Usuario;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+<<<<<<< HEAD
 import org.mindrot.BCrypt;
+=======
+>>>>>>> 2fa591a (favorzinho2)
 
 public class UsuarioDAO {
     
     public Usuario autenticar(String email, String senha) throws SQLException {
+<<<<<<< HEAD
         String sql = "SELECT * FROM usuarios WHERE email = ? AND ativo = true";
+=======
+        String sql = "SELECT * FROM usuarios WHERE email = ? AND senha = ? AND ativo = true";
+>>>>>>> 2fa591a (favorzinho2)
         
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
             stmt.setString(1, email);
+<<<<<<< HEAD
             
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -23,6 +31,13 @@ public class UsuarioDAO {
                     if (BCrypt.checkpw(senha, usuario.getSenha())) {
                         return usuario;
                     }
+=======
+            stmt.setString(2, senha); // Em produção, comparar com hash
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return criarUsuarioDoResultSet(rs);
+>>>>>>> 2fa591a (favorzinho2)
                 }
             }
         }
@@ -106,8 +121,12 @@ public class UsuarioDAO {
             
             stmt.setString(1, usuario.getNome());
             stmt.setString(2, usuario.getEmail());
+<<<<<<< HEAD
             String senhaHash = BCrypt.hashpw(usuario.getSenha(), BCrypt.gensalt());
             stmt.setString(3, senhaHash);
+=======
+            stmt.setString(3, usuario.getSenha()); // Em produção, fazer hash da senha
+>>>>>>> 2fa591a (favorzinho2)
             stmt.setString(4, usuario.getTipo());
             stmt.setBoolean(5, usuario.isAtivo());
             
@@ -148,8 +167,12 @@ public class UsuarioDAO {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
+<<<<<<< HEAD
             String novaSenhaHash = BCrypt.hashpw(novaSenha, BCrypt.gensalt());
             stmt.setString(1, novaSenhaHash);
+=======
+            stmt.setString(1, novaSenha); // Em produção, fazer hash da senha
+>>>>>>> 2fa591a (favorzinho2)
             stmt.setInt(2, usuarioId);
             
             return stmt.executeUpdate() > 0;

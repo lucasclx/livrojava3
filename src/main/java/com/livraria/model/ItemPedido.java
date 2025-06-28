@@ -1,11 +1,9 @@
 package com.livraria.model;
 
-import java.io.Serializable;
-
 import java.math.BigDecimal;
 
-public class ItemPedido  implements Serializable {
-    private static final long serialVersionUID = 1L;
+public class ItemPedido {
+
     private int id;
     private int pedidoId;
     private int livroId;
