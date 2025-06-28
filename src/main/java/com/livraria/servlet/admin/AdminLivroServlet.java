@@ -77,58 +77,57 @@ public class AdminLivroServlet extends HttpServlet {
     
     private Livro obterLivroDoRequest(HttpServletRequest request) throws IOException {
         StringBuilder buffer = new StringBuilder();
-        BufferedReader reader = request.getReader();
-        String line;
-        
-        while ((line = reader.readLine()) != null) {
-            buffer.append(line);
+        try (BufferedReader reader = request.getReader()) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                buffer.append(line);
+            }
         }
-        
+
         try {
             Map<String, Object> dados = gson.fromJson(buffer.toString(), Map.class);
-            
             Livro livro = new Livro();
-            
+
             // ID (para atualização)
-            if (dados.get("id") != null && !dados.get("id").toString().isEmpty()) {
-                livro.setId(((Double) dados.get("id")).intValue());
+            if (dados.get("id") != null) {
+                String idStr = dados.get("id").toString();
+                if (!idStr.isEmpty()) {
+                    livro.setId((int) Double.parseDouble(idStr));
+                }
             }
-            
+
             // Campos obrigatórios
-            if (dados.get("titulo") == null || dados.get("titulo").toString().trim().isEmpty()) {
-                return null;
-            }
-            livro.setTitulo(dados.get("titulo").toString().trim());
-            
-            if (dados.get("autor") == null || dados.get("autor").toString().trim().isEmpty()) {
-                return null;
-            }
-            livro.setAutor(dados.get("autor").toString().trim());
-            
-            if (dados.get("preco") == null) {
-                return null;
-            }
-            livro.setPreco(new BigDecimal(dados.get("preco").toString()));
-            
-            if (dados.get("estoque") == null) {
-                return null;
-            }
-            livro.setEstoque(((Double) dados.get("estoque")).intValue());
-            
-            if (dados.get("categoria") == null || dados.get("categoria").toString().trim().isEmpty()) {
-                return null;
-            }
-            livro.setCategoria(dados.get("categoria").toString().trim());
-            
+            String titulo = (String) dados.get("titulo");
+            if (titulo == null || titulo.trim().isEmpty()) return null;
+            livro.setTitulo(titulo.trim());
+
+            String autor = (String) dados.get("autor");
+            if (autor == null || autor.trim().isEmpty()) return null;
+            livro.setAutor(autor.trim());
+
+            Object precoObj = dados.get("preco");
+            if (precoObj == null) return null;
+            livro.setPreco(new BigDecimal(precoObj.toString()));
+
+            Object estoqueObj = dados.get("estoque");
+            if (estoqueObj == null) return null;
+            livro.setEstoque((int) Double.parseDouble(estoqueObj.toString()));
+
+            String categoria = (String) dados.get("categoria");
+            if (categoria == null || categoria.trim().isEmpty()) return null;
+            livro.setCategoria(categoria.trim());
+
             // Campos opcionais
             livro.setIsbn(dados.get("isbn") != null ? dados.get("isbn").toString().trim() : null);
             livro.setDescricao(dados.get("descricao") != null ? dados.get("descricao").toString().trim() : null);
             livro.setImagem(dados.get("imagem") != null ? dados.get("imagem").toString().trim() : null);
-            
+
             return livro;
-            
+
         } catch (Exception e) {
-            System.err.println("Erro ao processar dados do livro: " + e.getMessage());
+            System.err.println("Erro ao processar dados do livro: " + e.getClass().getName() + " - " + e.getMessage());
+            // Imprimir o stack trace para depuração detalhada
+            e.printStackTrace();
             return null;
         }
     }

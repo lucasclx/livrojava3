@@ -11,6 +11,7 @@
     <servlet>
         <servlet-name>TestServlet</servlet-name>
         <servlet-class>com.livraria.servlet.TestServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
     </servlet>
     <servlet-mapping>
         <servlet-name>TestServlet</servlet-name>
@@ -65,6 +66,7 @@
     <!-- Página inicial -->
     <welcome-file-list>
         <welcome-file>index.jsp</welcome-file>
+        <welcome-file>teste-simples.jsp</welcome-file>
     </welcome-file-list>
     
     <!-- Configuração do banco de dados -->
@@ -74,7 +76,7 @@
     </context-param>
     <context-param>
         <param-name>db.url</param-name>
-        <param-value>jdbc:mysql://localhost:3306/livraria</param-value>
+        <param-value>jdbc:mysql://localhost:3306/livraria?useSSL=false&amp;serverTimezone=UTC</param-value>
     </context-param>
     <context-param>
         <param-name>db.username</param-name>
@@ -84,17 +86,6 @@
         <param-name>db.password</param-name>
         <param-value></param-value>
     </context-param>
-    
-    <!-- Filtro de autenticação (desabilitado temporariamente) 
-    <filter>
-        <filter-name>AuthFilter</filter-name>
-        <filter-class>com.livraria.filter.AuthFilter</filter-class>
-    </filter>
-    <filter-mapping>
-        <filter-name>AuthFilter</filter-name>
-        <url-pattern>/admin/*</url-pattern>
-    </filter-mapping>
-    -->
     
     <!-- Configuração de encoding -->
     <filter>
@@ -110,4 +101,14 @@
     <session-config>
         <session-timeout>30</session-timeout>
     </session-config>
+    
+    <!-- Página de erro -->
+    <error-page>
+        <error-code>404</error-code>
+        <location>/erro.jsp</location>
+    </error-page>
+    <error-page>
+        <error-code>500</error-code>
+        <location>/erro.jsp</location>
+    </error-page>
 </web-app>

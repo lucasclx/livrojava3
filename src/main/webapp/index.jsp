@@ -66,9 +66,9 @@
                     <span id="carrinho-contador" class="carrinho-contador" style="display: none;">0</span>
                 </button>
                 
-                <button class="btn btn-outline-light" onclick="fazerLogin()">
+                <a href="login.jsp" class="btn btn-outline-light">
                     <i class="fas fa-user"></i> Login
-                </button>
+                </a>
             </div>
         </div>
     </nav>
