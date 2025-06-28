@@ -1,12 +1,9 @@
 package com.livraria.model;
 
-import java.io.Serializable;
-
 import java.math.BigDecimal;
 import java.sql.Date;
 
-public class Cupom  implements Serializable {
-    private static final long serialVersionUID = 1L;
+public class Cupom {
     private int id;
     private String codigo;
     private String tipo;

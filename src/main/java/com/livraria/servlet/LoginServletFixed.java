@@ -15,7 +15,7 @@ import javax.servlet.http.HttpSession;
 import javax.servlet.annotation.MultipartConfig;
 
 @MultipartConfig
-public class LoginServlet extends HttpServlet {
+public class LoginServletFixed extends HttpServlet {
     private static final long serialVersionUID = 1L;
     
     private UsuarioDAO usuarioDAO;

@@ -1,11 +1,8 @@
 package com.livraria.model;
 
-import java.io.Serializable;
-
 import java.sql.Timestamp;
 
-public class ListaDesejos  implements Serializable {
-    private static final long serialVersionUID = 1L;
+public class ListaDesejos {
     private int id;
     private int usuarioId;
     private int livroId;

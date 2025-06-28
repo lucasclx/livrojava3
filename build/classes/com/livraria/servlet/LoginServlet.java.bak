@@ -15,9 +15,8 @@ import javax.servlet.http.HttpSession;
 import javax.servlet.annotation.MultipartConfig;
 
 @MultipartConfig
+
 public class LoginServlet extends HttpServlet {
-    private static final long serialVersionUID = 1L;
-    
     private UsuarioDAO usuarioDAO;
     private Gson gson;
     
@@ -94,11 +93,8 @@ public class LoginServlet extends HttpServlet {
         
         if (usuario != null) {
             HttpSession session = request.getSession();
-            
-            // CORREÇÃO: Armazenar apenas dados essenciais, não o objeto completo
+            session.setAttribute("usuario", usuario);
             session.setAttribute("usuarioId", usuario.getId());
-            session.setAttribute("usuarioNome", usuario.getNome());
-            session.setAttribute("usuarioEmail", usuario.getEmail());
             session.setAttribute("usuarioTipo", usuario.getTipo());
             
             resultado.put("sucesso", true);
@@ -202,13 +198,14 @@ public class LoginServlet extends HttpServlet {
         HttpSession session = request.getSession(false);
         Map<String, Object> resultado = new HashMap<>();
         
-        if (session != null && session.getAttribute("usuarioId") != null) {
+        if (session != null && session.getAttribute("usuario") != null) {
+            Usuario usuario = (Usuario) session.getAttribute("usuario");
             resultado.put("logado", true);
             resultado.put("usuario", Map.of(
-                "id", session.getAttribute("usuarioId"),
-                "nome", session.getAttribute("usuarioNome"),
-                "email", session.getAttribute("usuarioEmail"),
-                "tipo", session.getAttribute("usuarioTipo")
+                "id", usuario.getId(),
+                "nome", usuario.getNome(),
+                "email", usuario.getEmail(),
+                "tipo", usuario.getTipo()
             ));
         } else {
             resultado.put("logado", false);

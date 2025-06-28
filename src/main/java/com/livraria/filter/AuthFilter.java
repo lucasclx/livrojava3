@@ -26,25 +26,25 @@ public class AuthFilter implements Filter {
         HttpServletResponse httpResponse = (HttpServletResponse) response;
         HttpSession session = httpRequest.getSession(false);
         
-        // Por enquanto, vamos apenas permitir acesso sem autenticação
-        // Você pode implementar a lógica de autenticação aqui posteriormente
-        
-        /*
-        // Exemplo de implementação de autenticação:
         String loginPath = httpRequest.getContextPath() + "/login.jsp";
-        boolean isLoggedIn = (session != null && session.getAttribute("usuario") != null);
-        boolean isLoginRequest = httpRequest.getRequestURI().equals(loginPath);
+        boolean isLoggedIn = (session != null && session.getAttribute("usuarioId") != null);
+        boolean isLoginRequest = httpRequest.getRequestURI().equals(loginPath) || httpRequest.getRequestURI().equals(httpRequest.getContextPath() + "/login");
+        boolean isRegisterRequest = httpRequest.getRequestURI().equals(httpRequest.getContextPath() + "/login") && "registrar".equals(httpRequest.getParameter("action"));
         boolean isLoginPage = httpRequest.getRequestURI().endsWith("login.jsp");
-        
-        if (isLoggedIn || isLoginRequest || isLoginPage) {
+        boolean isPublicResource = httpRequest.getRequestURI().contains("/css/") ||
+                                   httpRequest.getRequestURI().contains("/js/") ||
+                                   httpRequest.getRequestURI().contains("/images/") ||
+                                   httpRequest.getRequestURI().endsWith(".html") ||
+                                   httpRequest.getRequestURI().equals(httpRequest.getContextPath() + "/") ||
+                                   httpRequest.getRequestURI().equals(httpRequest.getContextPath() + "/index.jsp");
+
+        // Permitir acesso a recursos públicos, página de login e registro, ou se já logado
+        if (isPublicResource || isLoggedIn || isLoginRequest || isRegisterRequest) {
             chain.doFilter(request, response);
         } else {
+            // Redireciona para a página de login se não estiver logado e tentar acessar uma área protegida
             httpResponse.sendRedirect(loginPath);
         }
-        */
-        
-        // Por enquanto, apenas continuar sem autenticação
-        chain.doFilter(request, response);
     }
     
     @Override
