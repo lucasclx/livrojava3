@@ -260,6 +260,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         let carrinho = [];
         let dadosEntrega = {};
@@ -270,21 +271,23 @@
         document.addEventListener('DOMContentLoaded', function() {
             verificarLogin();
             carregarCarrinho();
+            exibirResumoEntrega(); // Exibir resumo de entrega inicialmente
             
             // Event listeners para pagamento
             document.querySelectorAll('input[name="pagamento"]').forEach(radio => {
                 radio.addEventListener('change', calcularTotal);
             });
 
-            // Event listener para o botão de finalizar pedido
-            document.querySelector('#form-entrega').addEventListener('submit', function(e) {
-                e.preventDefault(); // Impede o envio padrão do formulário
+            // Event listener para o formulário de entrega
+            document.getElementById('form-entrega').addEventListener('input', function() {
                 if (validarDadosEntrega()) {
                     salvarDadosEntrega();
                     exibirResumoEntrega();
-                    // A chamada para finalizarPedido() será feita pelo botão final
                 }
             });
+
+            // Event listener para o botão de finalizar pedido
+            document.querySelector('.checkout-section:last-child .btn-success').addEventListener('click', finalizarPedido);
         });
 
         // Verificar se usuário está logado
@@ -410,8 +413,7 @@
             for (let campo of campos) {
                 const elemento = document.getElementById(campo);
                 if (!elemento.value.trim()) {
-                    mostrarAlerta('danger', `O campo ${elemento.previousElementSibling.textContent} é obrigatório.`);
-                    elemento.focus();
+                    // Não mostra alerta aqui, apenas retorna false para validação
                     return false;
                 }
             }
@@ -448,7 +450,10 @@
         // Finalizar pedido
         function finalizarPedido() {
             if (!validarDadosEntrega()) {
-                return; // Impede a finalização se os dados de entrega não forem válidos
+                mostrarAlerta('danger', 'Por favor, preencha todos os dados de entrega obrigatórios.');
+                // Rolar para o formulário de entrega
+                document.getElementById('form-entrega').scrollIntoView({ behavior: 'smooth' });
+                return;
             }
             salvarDadosEntrega(); // Garante que os dados mais recentes estejam salvos
             exibirResumoEntrega(); // Atualiza o resumo de entrega
@@ -459,6 +464,7 @@
             formData.append('action', 'finalizar');
             formData.append('carrinho', JSON.stringify(carrinho));
             formData.append('endereco', enderecoCompleto);
+            formData.append('frete', freteSelecionado);
             if (cupomAplicado) {
                 formData.append('cupomId', cupomAplicado.id);
             }
